@@ -36,7 +36,7 @@ public class GameManager : MonoBehaviour
         StopCoroutine(GameStart());
     }
 
-    private void ChangeTimeScale(int i)
+    public void ChangeTimeScale(int i)
     {
         Time.timeScale = i;
     }

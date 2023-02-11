@@ -13,20 +13,29 @@ public class PlayerController : MonoBehaviour
     private InputAction move;
     private InputAction duck;
 
-    [SerializeField] private LayerMask groundLayerMask;
-
     [Header("Movement")]
     [SerializeField] private float moveAcceleration;
+    [SerializeField] private float moveDecceleration;
     [SerializeField] private float maxMoveSpeed;
+    [SerializeField] private float velocityPower;
+    [SerializeField] private bool test;
+    
+    [Header("Jump")]
     [SerializeField] private float jumpForce;
+    [SerializeField] [Range(0,1)] private float fallAcceleration;
+    [SerializeField] private float maxFallSpeed;
+    private float gravityScale;
+
+    [Header("Dash/Push")]
     [SerializeField] private float dashForce;
     [SerializeField] private float pushCoeff;
 
     [Space]
     [SerializeField] private SpriteRenderer colorRenderer;
+    [SerializeField] private LayerMask groundLayer;
 
     private Vector2 moveVector;
-    private bool isMoving = false;
+    private bool wantToMove = false;
     private bool isDucking = false;
     private bool doubleJumped = false;
 
@@ -57,10 +66,15 @@ public class PlayerController : MonoBehaviour
         playerActionMap.Disable();
     }
 
+    private void Start()
+    {
+        gravityScale = playerRB.gravityScale;
+    }
+
     private void Update()
     {
         moveVector = move.ReadValue<Vector2>();
-        isMoving = moveVector.sqrMagnitude > 0 ? true : false;
+        wantToMove = moveVector.sqrMagnitude > 0 ? true : false;
 
         isDucking = duck.ReadValue<bool>();
 
@@ -70,23 +84,48 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (isMoving && Mathf.Abs(playerRB.velocity.x) < maxMoveSpeed)
-            playerRB.AddForce(new Vector2(moveVector.x, 0) * moveAcceleration, ForceMode2D.Force);
+        #region Run
 
-        if(playerRB.velocity.sqrMagnitude > maxMoveSpeed * maxMoveSpeed)
-            playerRB.velocity = playerRB.velocity.normalized * maxMoveSpeed;
+        float desiredSpeed = moveVector.x * maxMoveSpeed;
+
+        float speedDif = desiredSpeed - playerRB.velocity.x;
+
+        float accRate = (Mathf.Abs(moveVector.x) > 0.01f) ? moveAcceleration : moveDecceleration;
+
+        float movement = test ? (Mathf.Pow(Mathf.Abs(speedDif) * accRate, velocityPower) * Mathf.Sign(speedDif)) : (speedDif * accRate);
+
+        playerRB.AddForce(Vector2.right * movement, ForceMode2D.Force);
+
+        //if (wantToMove && Mathf.Abs(playerRB.velocity.x) < maxMoveSpeed)
+        //    playerRB.AddForce(new Vector2(moveVector.x, 0) * moveAcceleration, ForceMode2D.Force);
+
+        //if (playerRB.velocity.sqrMagnitude > maxMoveSpeed * maxMoveSpeed)
+        //    playerRB.velocity = playerRB.velocity.normalized * maxMoveSpeed;
+
+        #endregion
+
+        #region Fall
+
+        if (playerRB.velocity.y < 0)
+            playerRB.gravityScale += fallAcceleration;
+        else
+            playerRB.gravityScale = gravityScale;
+
+        #endregion
+
+        Debug.DrawLine(playerRB.position, playerRB.velocity + playerRB.position, Color.red);
     }
 
     private void Jump(InputAction.CallbackContext context)
     {
         if (GroundCheck())
-            playerRB.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            playerRB.AddForce(Vector2.up * (jumpForce + -playerRB.velocity.y), ForceMode2D.Impulse);
 
-        //else if (!doubleJumped)
-        //{
-        //    playerRB.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-        //    doubleJumped = true;
-        //}
+        else if (!doubleJumped)
+        {
+            playerRB.AddForce(Vector2.up * (jumpForce + -playerRB.velocity.y), ForceMode2D.Impulse);
+            doubleJumped = true;
+        }
     }
 
     private void DashPush(InputAction.CallbackContext context)
@@ -105,17 +144,12 @@ public class PlayerController : MonoBehaviour
 
     private bool GroundCheck()
     {
-        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider2D.bounds.center, boxCollider2D.bounds.size, 0f, Vector2.down, .5f, groundLayerMask);
+        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider2D.bounds.center, boxCollider2D.bounds.size, 0f, Vector2.down, .5f, groundLayer);
 
-        //if(raycastHit.collider.CompareTag())
-        //ResetDoubleJump();
-
+        if(raycastHit.collider != null)
+            doubleJumped = false;
+        
         return raycastHit.collider != null;
-    }
-
-    private void ResetDoubleJump()
-    {
-        doubleJumped = false;
     }
 
     private void UpdateAnimator()

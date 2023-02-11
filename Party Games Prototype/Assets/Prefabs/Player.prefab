@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 4498557242382746672}
   - component: {fileID: 4498557242382746671}
   - component: {fileID: 8155777227439269234}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -52,15 +52,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 647f42b2948566f4a9bfd9a537869a82, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  groundLayerMask:
-    serializedVersion: 2
-    m_Bits: 64
-  moveAcceleration: 100
-  maxMoveSpeed: 50
+  moveAcceleration: 50
+  moveDecceleration: 15
+  maxMoveSpeed: 20
+  velocityPower: 0
+  test: 0
   jumpForce: 40
+  fallAcceleration: 0
+  maxFallSpeed: 15
   dashForce: 5
   pushCoeff: 2
   colorRenderer: {fileID: 8021748340541442214}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!212 &4498557242382746668
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -126,12 +131,12 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
-  m_LinearDrag: 5
-  m_AngularDrag: 0.05
-  m_GravityScale: 8
-  m_Material: {fileID: 0}
-  m_Interpolate: 0
-  m_SleepingMode: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0
+  m_GravityScale: 7
+  m_Material: {fileID: 6200000, guid: 2cfa7ec3e7b6cc74fb7090b9057d004d, type: 2}
+  m_Interpolate: 1
+  m_SleepingMode: 0
   m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!61 &999458518
@@ -335,7 +340,7 @@ GameObject:
   m_Component:
   - component: {fileID: 982017331343477512}
   - component: {fileID: 8021748340541442214}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PlayerColor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -351,7 +356,7 @@ Transform:
   m_GameObject: {fileID: 5638201651469182854}
   m_LocalRotation: {x: 0, y: 0, z: 1, w: 0}
   m_LocalPosition: {x: 0, y: 1.77, z: 0}
-  m_LocalScale: {x: 0.29, y: 0.29, z: 0.29}
+  m_LocalScale: {x: 0.35, y: 0.35, z: 0.35}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 4498557242382746669}

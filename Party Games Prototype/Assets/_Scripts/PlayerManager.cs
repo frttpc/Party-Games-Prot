@@ -5,7 +5,6 @@ using UnityEngine;
 using Cinemachine;
 using UnityEngine.InputSystem;
 
-
 public class PlayerManager : MonoBehaviour
 {
     private List<PlayerInput> players = new();
@@ -18,7 +17,7 @@ public class PlayerManager : MonoBehaviour
     private PlayerInputManager playerInputManager;
     WaitForSeconds threeSeconds = new WaitForSeconds(3f);
 
-    public event EventHandler OnPlayerDeath;
+    public event Action OnPlayerDeath;
 
     public static PlayerManager Instance;
 
@@ -36,12 +35,13 @@ public class PlayerManager : MonoBehaviour
     {
         if (!players.Contains(player))
         {
+            players.Add(player);
+
             Transform playerTransform = player.transform;
             playerTransform.position = startingPoints[players.Count - 1].position;
 
             player.GetComponent<PlayerController>().SetColor(playerColors[players.Count - 1]);
 
-            players.Add(player);
             targetGroup.AddMember(playerTransform, 1f, 1f);
         }
     }
@@ -49,8 +49,6 @@ public class PlayerManager : MonoBehaviour
     public void PlayerDied(GameObject respawnedObject)
     {
         StartCoroutine(RespawnPlayer(respawnedObject));
-
-        Invoke(null, 3f);
     }
 
     public int GetPlayerCount()
@@ -68,17 +66,20 @@ public class PlayerManager : MonoBehaviour
 
     private void DisablePlayer(GameObject respawnedObject)
     {
-        respawnedObject.GetComponent<Rigidbody2D>().simulated = false;
         respawnedObject.GetComponent<SpriteRenderer>().enabled = false;
-        respawnedObject.GetComponent<PlayerController>().enabled = false;
         respawnedObject.GetComponent<TrailRenderer>().enabled = false;
+        respawnedObject.GetComponent<PlayerController>().enabled = false;
+        respawnedObject.GetComponent<Rigidbody2D>().simulated = false;
     }
 
     private void EnablePlayer(GameObject respawnedObject)
     {
-        respawnedObject.GetComponent<Rigidbody2D>().simulated = true;
         respawnedObject.GetComponent<SpriteRenderer>().enabled = true;
-        respawnedObject.GetComponent<PlayerController>().enabled = true;
         respawnedObject.GetComponent<TrailRenderer>().enabled = true;
+        respawnedObject.GetComponent<PlayerController>().enabled = true;
+
+        Rigidbody2D playerRB = respawnedObject.GetComponent<Rigidbody2D>();
+        playerRB.simulated = true;
+        playerRB.velocity = Vector2.zero;
     }
 }
