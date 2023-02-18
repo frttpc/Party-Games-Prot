@@ -11,7 +11,6 @@ public class PlayerManager : MonoBehaviour
     [SerializeField] private CinemachineTargetGroup targetGroup;
     [SerializeField] private Transform respawnPoint;
     [SerializeField] private List<Transform> startingPoints = new();
-    [SerializeField] private List<LayerMask> playerLayers = new();
     [SerializeField] private List<Color> playerColors = new();
 
     private PlayerInputManager playerInputManager;
@@ -28,7 +27,7 @@ public class PlayerManager : MonoBehaviour
     }
 
     private void OnEnable() => playerInputManager.onPlayerJoined += AddPlayer;
-
+    
     private void OnDisable() => playerInputManager.onPlayerJoined -= AddPlayer;
 
     private void AddPlayer(PlayerInput player)
@@ -51,11 +50,6 @@ public class PlayerManager : MonoBehaviour
         StartCoroutine(RespawnPlayer(respawnedObject));
     }
 
-    public int GetPlayerCount()
-    {
-        return players.Count;
-    }
-
     public IEnumerator RespawnPlayer(GameObject respawnedObject)
     {
         DisablePlayer(respawnedObject);
@@ -68,18 +62,31 @@ public class PlayerManager : MonoBehaviour
     {
         respawnedObject.GetComponent<SpriteRenderer>().enabled = false;
         respawnedObject.GetComponent<TrailRenderer>().enabled = false;
-        respawnedObject.GetComponent<PlayerController>().enabled = false;
-        respawnedObject.GetComponent<Rigidbody2D>().simulated = false;
+
+        Rigidbody2D RB = respawnedObject.GetComponent<Rigidbody2D>();
+        RB.constraints = RigidbodyConstraints2D.FreezePositionY | RigidbodyConstraints2D.FreezePositionX;
+
+        PlayerController player = respawnedObject.GetComponent<PlayerController>();
+        player.GetColorRenderer().enabled = false;
+        player.enabled = false;
     }
 
     private void EnablePlayer(GameObject respawnedObject)
     {
         respawnedObject.GetComponent<SpriteRenderer>().enabled = true;
         respawnedObject.GetComponent<TrailRenderer>().enabled = true;
-        respawnedObject.GetComponent<PlayerController>().enabled = true;
 
-        Rigidbody2D playerRB = respawnedObject.GetComponent<Rigidbody2D>();
-        playerRB.simulated = true;
-        playerRB.velocity = Vector2.zero;
+        Rigidbody2D RB = respawnedObject.GetComponent<Rigidbody2D>();
+        RB.constraints = RigidbodyConstraints2D.FreezeRotation;
+        RB.velocity = Vector2.zero;
+
+        PlayerController player = respawnedObject.GetComponent<PlayerController>();
+        player.GetColorRenderer().enabled = true;
+        player.enabled = true;
+    }
+
+    public int GetPlayerCount()
+    {
+        return players.Count;
     }
 }

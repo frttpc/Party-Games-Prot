@@ -1,3 +1,6 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -5,39 +8,56 @@ public class PlayerController : MonoBehaviour
 {
     private Rigidbody2D playerRB;
     private BoxCollider2D boxCollider2D;
+    private CircleCollider2D circleCollider2D;
     private Animator animator;
     private SpriteRenderer spriteRenderer;
 
-    private InputActionAsset inputActionAsset;
+    private InputActionAsset playerInputActions;
     private InputActionMap playerActionMap;
     private InputAction move;
     private InputAction duck;
+
+    [SerializeField] private SpriteRenderer colorRenderer;
+    [SerializeField] private LayerMask groundLayer;
 
     [Header("Movement")]
     [SerializeField] private float moveAcceleration;
     [SerializeField] private float moveDecceleration;
     [SerializeField] private float maxMoveSpeed;
-    [SerializeField] private float velocityPower;
-    [SerializeField] private bool test;
-    
+    private Vector2 moveVector;
+
     [Header("Jump")]
     [SerializeField] private float jumpForce;
-    [SerializeField] [Range(0,1)] private float fallAcceleration;
     [SerializeField] private float maxFallSpeed;
-    private float gravityScale;
+    [SerializeField] private float coyoteTime = 0.2f;
+    private float coyoteTimeCounter;
+    [SerializeField] private float jumpBufferTime = 0.2f;
+    private float jumpBufferCounter;
+    private bool jumpIsPressed = false;
+    private bool doubleJumped = false;
 
-    [Header("Dash/Push")]
+    [Header("Dash")]
     [SerializeField] private float dashForce;
+    [SerializeField] private float dashTime;
+    private float dashTimeCounter;
+    [SerializeField] private float dashCooldown;
+    private float dashCooldownCounter;
+    private bool dashIsPressed = false;
+    private bool canDash = true;
+    private bool isDashing = false;
+
+    [Header("Wall Jump")]
+    [SerializeField] [Range(1, 20)] private float wallFriction = 10;
+    private bool isWalled = false;
+
+    [Header("Push")]
     [SerializeField] private float pushCoeff;
 
-    [Space]
-    [SerializeField] private SpriteRenderer colorRenderer;
-    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private float some;
 
-    private Vector2 moveVector;
-    private bool wantToMove = false;
+    private float gravityScale;
     private bool isDucking = false;
-    private bool doubleJumped = false;
+    private bool isGrounded = false;
 
     private void Awake()
     {
@@ -45,25 +65,26 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         boxCollider2D = GetComponent<BoxCollider2D>();
+        circleCollider2D = GetComponent<CircleCollider2D>();
 
-        inputActionAsset = GetComponent<PlayerInput>().actions;
-        playerActionMap = inputActionAsset.FindActionMap("Player");
+        playerInputActions = GetComponent<PlayerInput>().actions;
+        playerActionMap = playerInputActions.FindActionMap("Player");
     }
 
     private void OnEnable()
     {
+        playerActionMap.Enable();
         move = playerActionMap.FindAction("Movement");
         duck = playerActionMap.FindAction("Duck");
-        playerActionMap.FindAction("Jump").performed += Jump;
-        playerActionMap.FindAction("Dash/Push").performed += DashPush;
-        playerActionMap.Enable();
+        playerActionMap.FindAction("Jump").performed += JumpIsPressed;
+        playerActionMap.FindAction("Dash/Push").performed += DashIsPressed;
     }
 
     private void OnDisable()
     {
-        playerActionMap.FindAction("Jump").performed -= Jump;
-        playerActionMap.FindAction("Dash/Push").performed -= DashPush;
         playerActionMap.Disable();
+        playerActionMap.FindAction("Jump").performed -= JumpIsPressed;
+        playerActionMap.FindAction("Dash/Push").performed -= DashIsPressed;
     }
 
     private void Start()
@@ -73,10 +94,51 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        moveVector = move.ReadValue<Vector2>();
-        wantToMove = moveVector.sqrMagnitude > 0 ? true : false;
+        isGrounded = GroundCheck();
 
-        isDucking = duck.ReadValue<bool>();
+        if (playerRB.velocity.y <= 0)
+        {
+            isWalled = WallCheck();
+        }
+        else
+            isWalled = false;
+
+        if (isGrounded || isWalled)
+        {
+            coyoteTimeCounter = coyoteTime;
+            doubleJumped = false;
+        }
+        else
+        {
+            coyoteTimeCounter -= Time.deltaTime;
+        }
+
+        if (jumpIsPressed)
+            jumpBufferCounter = jumpBufferTime;
+        else
+            jumpBufferCounter -= Time.deltaTime;
+
+        if (dashIsPressed && canDash)
+        {
+            dashTimeCounter = dashTime;
+            dashCooldownCounter = dashCooldown;
+        }
+
+        if (dashTimeCounter < 0)
+        {
+            isDashing = false;
+            playerRB.gravityScale = gravityScale;
+            dashTimeCounter = dashTime;
+        }
+
+        if(dashCooldownCounter < 0)
+        {
+            canDash = true;
+        }
+
+        moveVector = move.ReadValue<Vector2>();
+
+        isDucking = duck.ReadValue<float>() > 0.1f && isGrounded;
 
         UpdateAnimator();
         UpdateSprite();
@@ -84,71 +146,126 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        #region Run
+        #region Move
 
-        float desiredSpeed = moveVector.x * maxMoveSpeed;
+        if (!isDashing)
+        {
+            if (isDucking && isGrounded)
+                moveVector.x = 0;
 
-        float speedDif = desiredSpeed - playerRB.velocity.x;
+            float desiredSpeed = moveVector.x * maxMoveSpeed;
 
-        float accRate = (Mathf.Abs(moveVector.x) > 0.01f) ? moveAcceleration : moveDecceleration;
+            float speedDif = desiredSpeed - playerRB.velocity.x;
 
-        float movement = test ? (Mathf.Pow(Mathf.Abs(speedDif) * accRate, velocityPower) * Mathf.Sign(speedDif)) : (speedDif * accRate);
+            float accRate = (Mathf.Abs(moveVector.x) > 0.01f) ? moveAcceleration : moveDecceleration;
 
-        playerRB.AddForce(Vector2.right * movement, ForceMode2D.Force);
+            playerRB.AddForce(accRate * speedDif * Vector2.right, ForceMode2D.Force);
+        }
 
-        //if (wantToMove && Mathf.Abs(playerRB.velocity.x) < maxMoveSpeed)
-        //    playerRB.AddForce(new Vector2(moveVector.x, 0) * moveAcceleration, ForceMode2D.Force);
+        #endregion
+        
+        #region Jump
 
-        //if (playerRB.velocity.sqrMagnitude > maxMoveSpeed * maxMoveSpeed)
-        //    playerRB.velocity = playerRB.velocity.normalized * maxMoveSpeed;
+        if (jumpIsPressed)
+        {
+            if (jumpBufferCounter > 0 && coyoteTimeCounter > 0)
+            {
+                if (isWalled)
+                    Jump(new Vector2(-moveVector.x, 1) * some);
+                else
+                    Jump(Vector2.up);
+                coyoteTimeCounter = 0;
+            }
+            else if (!doubleJumped && !isGrounded)
+            {
+                Jump(Vector2.up);
+                doubleJumped = true;
+            }
+        }
+        
+        jumpIsPressed = false;
 
         #endregion
 
         #region Fall
 
-        if (playerRB.velocity.y < 0)
-            playerRB.gravityScale += fallAcceleration;
-        else
-            playerRB.gravityScale = gravityScale;
+        if (isWalled && Mathf.Abs(moveVector.x) > 0)
+            playerRB.velocity = new Vector2(moveVector.x, 0);
+            //playerRB.AddForce(-playerRB.velocity.y * wallFriction * Vector2.up, ForceMode2D.Force);
+
+        else if (Mathf.Abs(playerRB.velocity.y) > maxFallSpeed)
+            playerRB.AddForce(-playerRB.velocity.y * Vector2.up, ForceMode2D.Force);
 
         #endregion
 
-        Debug.DrawLine(playerRB.position, playerRB.velocity + playerRB.position, Color.red);
-    }
+        #region Dash
 
-    private void Jump(InputAction.CallbackContext context)
-    {
-        if (GroundCheck())
-            playerRB.AddForce(Vector2.up * (jumpForce + -playerRB.velocity.y), ForceMode2D.Impulse);
-
-        else if (!doubleJumped)
+        if (dashIsPressed && canDash)
         {
-            playerRB.AddForce(Vector2.up * (jumpForce + -playerRB.velocity.y), ForceMode2D.Impulse);
-            doubleJumped = true;
+            Dash();
         }
+
+        #endregion
     }
 
-    private void DashPush(InputAction.CallbackContext context)
+    private void JumpIsPressed(InputAction.CallbackContext context)
     {
-        playerRB.AddForce(playerRB.velocity * dashForce, ForceMode2D.Impulse);
+        jumpIsPressed = context.performed;
+    }
+
+    private void Jump(Vector2 dir)
+    {
+        playerRB.AddForce(dir * (jumpForce + -playerRB.velocity.y), ForceMode2D.Impulse);
+
+        jumpBufferCounter = 0;
+    }
+
+    private void DashIsPressed(InputAction.CallbackContext context)
+    {
+        dashIsPressed = context.performed;
+    }
+
+    private void Dash()
+    {
+        isDashing = true;
+        canDash = false;
+
+        playerRB.gravityScale = 0;
+        Vector2 dir = (playerRB.velocity * 1000).normalized;
+        playerRB.AddForce(dir * dashForce, ForceMode2D.Impulse);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (CompareTag(collision.transform.tag))
         {
+            if (isDashing)
+                playerRB.velocity = Vector2.zero;
+            else
+                playerRB.AddForce(-playerRB.velocity, ForceMode2D.Impulse);
+
             collision.transform.GetComponent<Rigidbody2D>().AddForce(playerRB.velocity * pushCoeff, ForceMode2D.Impulse);
-            playerRB.AddForce(-playerRB.velocity, ForceMode2D.Impulse);
         }
     }
 
     private bool GroundCheck()
     {
-        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider2D.bounds.center, boxCollider2D.bounds.size, 0f, Vector2.down, .5f, groundLayer);
+        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider2D.bounds.center, boxCollider2D.bounds.size, 0f, Vector2.down, .3f, groundLayer);
 
-        if(raycastHit.collider != null)
-            doubleJumped = false;
-        
+        return raycastHit.collider != null;
+    }
+
+    private bool WallCheck()
+    {
+        Vector2 dir;
+
+        if (moveVector.x < 0)
+            dir = Vector2.left;
+        else
+            dir = Vector2.right;
+
+        RaycastHit2D raycastHit = Physics2D.Raycast(circleCollider2D.bounds.center, dir, circleCollider2D.radius + 0.3f , groundLayer);
+
         return raycastHit.collider != null;
     }
 
@@ -157,16 +274,15 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat("xSpeed", Mathf.Abs(playerRB.velocity.x));
         animator.SetFloat("ySpeed", playerRB.velocity.y);
 
-        if (!GroundCheck())
-            animator.SetBool("isGrounded", false);
-        else
+        if (isGrounded)
             animator.SetBool("isGrounded", true);
+        else
+            animator.SetBool("isGrounded", false);
 
         if (isDucking)
-            Debug.Log("Ducking");
-        //    animator.SetBool("isDucking", true);
-        //else
-        //    animator.SetBool("isDucking", false);
+            animator.SetBool("isDucking", true);
+        else
+            animator.SetBool("isDucking", false);
     }
 
     private void UpdateSprite()
@@ -180,5 +296,10 @@ public class PlayerController : MonoBehaviour
     public void SetColor(Color color)
     {
         colorRenderer.color = color;
+    }
+
+    public SpriteRenderer GetColorRenderer()
+    {
+        return colorRenderer;
     }
 }

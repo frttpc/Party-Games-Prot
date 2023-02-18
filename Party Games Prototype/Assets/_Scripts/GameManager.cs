@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (isStarting && PlayerManager.Instance.GetPlayerCount() == playerInputManager.maxPlayerCount)
+        //if (isStarting && PlayerManager.Instance.GetPlayerCount() == playerInputManager.maxPlayerCount)
             StartCoroutine(GameStart());
     }
 
