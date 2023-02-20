@@ -42,6 +42,8 @@ public class PlayerManager : MonoBehaviour
             player.GetComponent<PlayerController>().SetColor(playerColors[players.Count - 1]);
 
             targetGroup.AddMember(playerTransform, 1f, 1f);
+
+            player.name = "Player " + players.Count;
         }
     }
 

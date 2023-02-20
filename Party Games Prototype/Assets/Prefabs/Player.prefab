@@ -56,19 +56,20 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  moveAcceleration: 50
+  moveAcceleration: 10
   moveDecceleration: 15
   maxMoveSpeed: 20
   jumpForce: 40
-  maxFallSpeed: 15
+  maxFallSpeed: 50
   coyoteTime: 0.2
   jumpBufferTime: 0.2
   dashForce: 50
   dashTime: 0.2
   dashCooldown: 2
   wallFriction: 15
-  pushCoeff: 2
-  some: 1.1
+  wallJumpSpeed: 2
+  pushAmount: 5
+  minPushSpeed: 2
 --- !u!212 &4498557242382746668
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -210,7 +211,7 @@ MonoBehaviour:
       m_Calls: []
   m_ActionEvents: []
   m_NeverAutoSwitchControlSchemes: 1
-  m_DefaultControlScheme: Keyboard P1
+  m_DefaultControlScheme: Keyboard
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
