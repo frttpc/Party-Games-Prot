@@ -52,8 +52,10 @@ public class PlayerController : MonoBehaviour
     private bool isWalled = false;
 
     [Header("Push")]
-    [SerializeField] private float pushAmount;
+    [SerializeField] private float maxPushAmount;
+    [SerializeField] private float minPushAmount;
     [SerializeField] private float minPushSpeed;
+    [SerializeField] private float pushMultiplier;
 
     private Vector2 velocityBeforePhysicsUpdate;
     private float gravityScale;
@@ -267,8 +269,19 @@ public class PlayerController : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.transform.GetComponent<PlayerController>())
-        {
-            collision.transform.GetComponent<Rigidbody2D>().AddForce(velocityBeforePhysicsUpdate * pushAmount, ForceMode2D.Impulse);
+        { 
+            Vector2 normal = collision.GetContact(0).normal;
+
+            float angle = Mathf.Clamp(Vector2.Angle(-normal, velocityBeforePhysicsUpdate), 1, 90);
+
+            float angleMag = Mathf.Lerp(1, 0, angle / 90);
+
+            float magnitude = Mathf.Clamp(velocityBeforePhysicsUpdate.magnitude, minPushAmount, maxPushAmount);
+
+            if (name == "Player 1")
+                Debug.Log("Mag: " + magnitude + " AngleMag: " + angleMag);
+
+            collision.transform.GetComponent<Rigidbody2D>().AddForce(angleMag * magnitude * pushMultiplier * -normal, ForceMode2D.Impulse);
         }
     }
 

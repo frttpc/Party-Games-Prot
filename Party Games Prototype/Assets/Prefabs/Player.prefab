@@ -68,8 +68,10 @@ MonoBehaviour:
   dashCooldown: 2
   wallFriction: 15
   wallJumpSpeed: 2
-  pushAmount: 5
+  maxPushAmount: 100
+  minPushAmount: 10
   minPushSpeed: 2
+  pushMultiplier: 3
 --- !u!212 &4498557242382746668
 SpriteRenderer:
   m_ObjectHideFlags: 0
