@@ -48,20 +48,18 @@ public class PlayerController : MonoBehaviour
 
     [Header("Wall Jump")]
     [SerializeField] [Range(10, 20)] private float wallFriction = 15;
-    [SerializeField] private float wallJumpSpeed;
+    [SerializeField] [Range(1, 5)] private float wallJumpMultipler;
     private bool isWalled = false;
 
     [Header("Push")]
     [SerializeField] private float maxPushAmount;
     [SerializeField] private float minPushAmount;
-    [SerializeField] private float minPushSpeed;
-    [SerializeField] private float pushMultiplier;
+    [SerializeField] [Range(1,5)] private float pushMultiplier;
 
     private Vector2 velocityBeforePhysicsUpdate;
     private float gravityScale;
     private bool isDucking = false;
     private bool isGrounded = false;
-    private int collisionNo = 0;
 
     private void Awake()
     {
@@ -175,9 +173,6 @@ public class PlayerController : MonoBehaviour
             float accRate = (Mathf.Abs(moveVector.x) > 0.01f) ? moveAcceleration : moveDecceleration;
 
             playerRB.AddForce(accRate * speedDif * Vector2.right, ForceMode2D.Force);
-
-            //if (name == "Player 2")
-            //    Debug.Log("Acc: " + accRate + " Speeddiff: " + speedDif + " Sum: " + accRate * speedDif);
         }
 
         #endregion
@@ -189,7 +184,7 @@ public class PlayerController : MonoBehaviour
             if (jumpBufferCounter > 0 && coyoteTimeCounter > 0)
             {
                 if (isWalled)
-                    Jump();
+                    WallJump();
                 else
                     Jump();
                 coyoteTimeCounter = 0;
@@ -199,10 +194,7 @@ public class PlayerController : MonoBehaviour
                 Jump();
                 doubleJumped = true;
             }
-
-            jumpIsPressed = false;
         }
-
 
         #endregion
 
@@ -211,8 +203,12 @@ public class PlayerController : MonoBehaviour
         if (!isDashing)
         {
             if (isWalled && Mathf.Abs(moveVector.x) > 0)
-                playerRB.AddForce(-playerRB.velocity.y * wallFriction * Vector2.up, ForceMode2D.Force);
-
+            {
+                //if (playerRB.velocity.y > 0 && !jumpIsPressed)
+                //    playerRB.velocity = Vector2.zero;
+                //else
+                    playerRB.AddForce(-playerRB.velocity.y * wallFriction * Vector2.up, ForceMode2D.Force);
+            }
             else if (Mathf.Abs(playerRB.velocity.y) > maxFallSpeed)
             {
                 playerRB.velocity = new Vector2(playerRB.velocity.x, maxFallSpeed * Mathf.Sign(playerRB.velocity.y));
@@ -232,9 +228,7 @@ public class PlayerController : MonoBehaviour
 
         #endregion
 
-        //if(playerRB.velocity.sqrMagnitude > maxFallSpeed * maxFallSpeed)
-        //    playerRB.AddForce(-playerRB.velocity.normalized * maxMoveSpeed, ForceMode2D.Impulse);
-
+        jumpIsPressed = false;
         velocityBeforePhysicsUpdate = playerRB.velocity;
 
         if(name == "Player 1")
@@ -250,10 +244,9 @@ public class PlayerController : MonoBehaviour
         jumpBufferCounter = 0;
     }
 
-    //Not Working
     private void WallJump()
     {
-        playerRB.AddForce(Vector2.Lerp(new Vector2(-moveVector.x, 0), new Vector2(-moveVector.x,1), wallJumpSpeed).normalized * jumpForce, ForceMode2D.Impulse);
+        playerRB.AddForce(jumpForce * wallJumpMultipler * new Vector2(-moveVector.x, 1), ForceMode2D.Impulse);
     }
 
     private void Dash()
@@ -277,9 +270,6 @@ public class PlayerController : MonoBehaviour
             float angleMag = Mathf.Lerp(1, 0, angle / 90);
 
             float magnitude = Mathf.Clamp(velocityBeforePhysicsUpdate.magnitude, minPushAmount, maxPushAmount);
-
-            if (name == "Player 1")
-                Debug.Log("Mag: " + magnitude + " AngleMag: " + angleMag);
 
             collision.transform.GetComponent<Rigidbody2D>().AddForce(angleMag * magnitude * pushMultiplier * -normal, ForceMode2D.Impulse);
         }
