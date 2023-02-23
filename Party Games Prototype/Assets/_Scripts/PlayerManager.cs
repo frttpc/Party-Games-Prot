@@ -14,7 +14,7 @@ public class PlayerManager : MonoBehaviour
     [SerializeField] private List<Color> playerColors = new();
 
     private PlayerInputManager playerInputManager;
-    WaitForSeconds threeSeconds = new WaitForSeconds(3f);
+    private readonly WaitForSeconds threeSeconds = new(3f);
 
     public event Action OnPlayerDeath;
 
@@ -23,6 +23,7 @@ public class PlayerManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        DontDestroyOnLoad(this);
         playerInputManager = GetComponent<PlayerInputManager>();
     }
 
