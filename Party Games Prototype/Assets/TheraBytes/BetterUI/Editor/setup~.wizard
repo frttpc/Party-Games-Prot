@@ -1,8 +1,7 @@
 SkipWizard=False
 optimizedResolution=1920:1080
 isFallbackLandscape=True
-supportBothOrientations=True
-responsiveDesign=2
+supportBothOrientations=False
+responsiveDesign=1
 TextMeshPro=<null>
 asmdef=<null>
-page_to_load_key=ExampleScenesPage
