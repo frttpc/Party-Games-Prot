@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 
 public class PlayerManager : MonoBehaviour
 {
+    private List<PlayerInput> players = new();
     [SerializeField] private CinemachineTargetGroup targetGroup;
     [SerializeField] private Transform respawnPoint;
     [SerializeField] private List<Transform> startingPoints = new();
@@ -32,16 +33,19 @@ public class PlayerManager : MonoBehaviour
 
     private void AddPlayer(PlayerInput player)
     {
-        player.transform.position = startingPoints[playerInputManager.playerCount - 1].position;
+        if (!players.Contains(player))
+        {
+            players.Add(player);
 
-        player.GetComponent<PlayerController>().SetColor(playerColors[playerInputManager.playerCount - 1]);
+            Transform playerTransform = player.transform;
+            playerTransform.position = startingPoints[players.Count - 1].position;
 
-        targetGroup.AddMember(player.transform, 1f, 1f);
+            player.GetComponent<PlayerController>().SetColor(playerColors[players.Count - 1]);
 
-        player.name = "Player " + playerInputManager.playerCount;
+            targetGroup.AddMember(playerTransform, 1f, 1f);
 
-        if (playerInputManager.playerCount == playerInputManager.maxPlayerCount)
-            player.GetComponent<SpriteRenderer>().flipX = true;
+            player.name = "Player " + players.Count;
+        }
     }
 
     public void PlayerDied(GameObject respawnedObject)
@@ -86,6 +90,6 @@ public class PlayerManager : MonoBehaviour
 
     public int GetPlayerCount()
     {
-        return playerInputManager.playerCount;
+        return players.Count;
     }
 }
