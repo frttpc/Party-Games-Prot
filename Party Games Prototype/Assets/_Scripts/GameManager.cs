@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,10 +7,8 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private PlayerInputManager playerInputManager;
-    private CountdownTimer oneSecondCountdownTimer = new(1);
-    private bool isStarting = true;
 
-    public event Action OnGameStart;
+    private bool isStarting = true;
 
     public static GameManager Instance;
 
@@ -23,43 +20,25 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        StopTimeScale();
-    }
-
-    private void OnEnable()
-    {
-        OnGameStart += StartTimeScale;
-    }
-
-    private void OnDisable()
-    {
-        OnGameStart -= StartTimeScale;
+        ChangeTimeScale(0);
     }
 
     private void Update()
     {
-        if (isStarting && playerInputManager.playerCount == playerInputManager.maxPlayerCount)
-        {
-            if (!oneSecondCountdownTimer.GetTimerStatus())
-            {
-                oneSecondCountdownTimer.StartTimer();
-            }
-            else
-            {
-                if (!UIManager.Instance.CountdownIsStarted())
-                {
-                    UIManager.Instance.StartCountdown();
-                }
-                else
-                {
-                    OnGameStart?.Invoke();
-                    isStarting = false;
-                }
-            }
-        }
+        //if (isStarting && PlayerManager.Instance.GetPlayerCount() == playerInputManager.maxPlayerCount)
+            StartCoroutine(GameStart());
     }
 
-    public void StopTimeScale() => Time.timeScale = 0;
+    private IEnumerator GameStart()
+    {
+        yield return new WaitForSecondsRealtime(3f);
+        ChangeTimeScale(1);
+        isStarting = false;
+        StopCoroutine(GameStart());
+    }
 
-    public void StartTimeScale() => Time.timeScale = 1;
+    public void ChangeTimeScale(int i)
+    {
+        Time.timeScale = i;
+    }
 }
