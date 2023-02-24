@@ -11,11 +11,7 @@ public class PlayerController : MonoBehaviour
     private CircleCollider2D circleCollider2D;
     private Animator animator;
     private SpriteRenderer spriteRenderer;
-
-    private InputActionAsset playerInputActions;
-    private InputActionMap playerActionMap;
-    private InputAction move;
-    private InputAction duck;
+    private PlayerInputController playerInputController;
 
     [SerializeField] private SpriteRenderer colorRenderer;
     [SerializeField] private LayerMask groundLayer;
@@ -33,7 +29,6 @@ public class PlayerController : MonoBehaviour
     private float coyoteTimeCounter;
     [SerializeField] [Range(0, 0.5f)] private float jumpBufferTime = 0.2f;
     private float jumpBufferCounter;
-    private bool jumpIsPressed = false;
     private bool doubleJumped = false;
 
     [Header("Dash")]
@@ -42,7 +37,6 @@ public class PlayerController : MonoBehaviour
     private float dashTimeCounter;
     [SerializeField] private float dashCooldown;
     private float dashCooldownCounter;
-    private bool dashIsPressed = false;
     private bool canDash = true;
     private bool isDashing = false;
 
@@ -68,30 +62,8 @@ public class PlayerController : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         boxCollider2D = GetComponent<BoxCollider2D>();
         circleCollider2D = GetComponent<CircleCollider2D>();
-
-        playerInputActions = GetComponent<PlayerInput>().actions;
-        playerActionMap = playerInputActions.FindActionMap("Player");
+        playerInputController = GetComponent<PlayerInputController>();
     }
-
-    private void OnEnable()
-    {
-        playerActionMap.Enable();
-        move = playerActionMap.FindAction("Movement");
-        duck = playerActionMap.FindAction("Duck");
-        playerActionMap.FindAction("Jump").performed += JumpIsPressed;
-        playerActionMap.FindAction("Dash/Push").performed += DashIsPressed;
-    }
-
-    private void OnDisable()
-    {
-        playerActionMap.Disable();
-        playerActionMap.FindAction("Jump").performed -= JumpIsPressed;
-        playerActionMap.FindAction("Dash/Push").performed -= DashIsPressed;
-    }
-
-    private void JumpIsPressed(InputAction.CallbackContext context) => jumpIsPressed = context.performed;
-
-    private void DashIsPressed(InputAction.CallbackContext context) => dashIsPressed = context.performed;
 
     private void Start()
     {
@@ -119,14 +91,14 @@ public class PlayerController : MonoBehaviour
             coyoteTimeCounter -= Time.deltaTime;
         }
 
-        if (jumpIsPressed)
+        if (playerInputController.jumpIsPressed)
             jumpBufferCounter = jumpBufferTime;
         else
             jumpBufferCounter -= Time.deltaTime;
 
         #region Dash
 
-        if (dashIsPressed && canDash)
+        if (playerInputController.dashIsPressed && canDash)
         {
             dashTimeCounter = dashTime;
             dashCooldownCounter = dashCooldown;
@@ -149,9 +121,9 @@ public class PlayerController : MonoBehaviour
 
         #endregion
 
-        moveVector = move.ReadValue<Vector2>();
+        moveVector = playerInputController.move.ReadValue<Vector2>();
 
-        isDucking = duck.ReadValue<float>() > 0.5f && isGrounded;
+        isDucking = playerInputController.duck.ReadValue<float>() > 0.5f && isGrounded;
 
         UpdateAnimator();
         UpdateSprite();
@@ -179,7 +151,7 @@ public class PlayerController : MonoBehaviour
         
         #region Jump
         
-        if (jumpIsPressed && !isDashing)
+        if (playerInputController.jumpIsPressed && !isDashing)
         {
             if (jumpBufferCounter > 0 && coyoteTimeCounter > 0)
             {
@@ -204,10 +176,7 @@ public class PlayerController : MonoBehaviour
         {
             if (isWalled && Mathf.Abs(moveVector.x) > 0)
             {
-                //if (playerRB.velocity.y > 0 && !jumpIsPressed)
-                //    playerRB.velocity = Vector2.zero;
-                //else
-                    playerRB.AddForce(-playerRB.velocity.y * wallFriction * Vector2.up, ForceMode2D.Force);
+                playerRB.AddForce(-playerRB.velocity.y * wallFriction * Vector2.up, ForceMode2D.Force);
             }
             else if (Mathf.Abs(playerRB.velocity.y) > maxFallSpeed)
             {
@@ -220,21 +189,18 @@ public class PlayerController : MonoBehaviour
 
         #region Dash
 
-        if (dashIsPressed && canDash)
+        if (playerInputController.dashIsPressed && canDash)
         {
             Dash();
         }
-        dashIsPressed = false;
 
         #endregion
 
-        jumpIsPressed = false;
+        playerInputController.dashIsPressed = false;
+        playerInputController.jumpIsPressed = false;
+        
         velocityBeforePhysicsUpdate = playerRB.velocity;
 
-        if(name == "Player 1")
-            Debug.DrawRay(playerRB.position, playerRB.velocity, Color.red);
-        else
-            Debug.DrawRay(playerRB.position, playerRB.velocity, Color.blue);
     }
 
     private void Jump()
@@ -311,7 +277,7 @@ public class PlayerController : MonoBehaviour
     {
         if (moveVector.x < 0)
             spriteRenderer.flipX = true;
-        else if(moveVector.x > 0)
+        else if (moveVector.x > 0)
             spriteRenderer.flipX = false;
     }
 
