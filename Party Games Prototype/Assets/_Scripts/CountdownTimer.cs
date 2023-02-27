@@ -1,40 +1,30 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
 public class CountdownTimer : MonoBehaviour
 {
-    [SerializeField] private float countdownTime = 1;
-    private bool timerIsStarted = false;
+    private TextMeshProUGUI timerText;
+    [SerializeField] private float countdownTime = 3f;
 
-
-    public CountdownTimer(int time)
+    private void Start()
     {
-        countdownTime = time;
+        timerText = GetComponent<TextMeshProUGUI>();
+        timerText.enabled = true;
+        countdownTime += 0.99f;
     }
 
     private void Update()
     {
-        if (timerIsStarted)
+        if (countdownTime > 1)
         {
-            if (countdownTime < 0)
-            {
-                countdownTime = 0;
-                timerIsStarted = false;
-            }
-            else
-            {
-                countdownTime -= Time.deltaTime;
-            }
+            timerText.text = ((int)countdownTime).ToString();
+            countdownTime -= Time.deltaTime;
+        }
+        else
+        {
+            UIManager.Instance.CountdownFinished();
         }
     }
 
-    public void StartTimer() => timerIsStarted = true;
-
-    public bool GetTimerStatus() => timerIsStarted;
-
-    public float GetTime() => countdownTime;
-
-    public void SetCountdownTime(float time) => countdownTime = time;
+    public void SetCountdownTime(float time) => countdownTime = time + 0.99f;
 }

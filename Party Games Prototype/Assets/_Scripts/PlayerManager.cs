@@ -8,9 +8,10 @@ using UnityEngine.InputSystem;
 public class PlayerManager : MonoBehaviour
 {
     [SerializeField] private CinemachineTargetGroup targetGroup;
-    [SerializeField] private Transform respawnPoint;
+    [SerializeField] private List<Transform> respawnPoints = new();
     [SerializeField] private List<Transform> startingPoints = new();
     [SerializeField] private List<Color> playerColors = new();
+    private bool respawningPlayer = false;
 
     private PlayerInputManager playerInputManager;
     private readonly WaitForSeconds threeSeconds = new(3f);
@@ -52,7 +53,11 @@ public class PlayerManager : MonoBehaviour
     public IEnumerator RespawnPlayer(GameObject respawnedObject)
     {
         DisablePlayer(respawnedObject);
-        respawnedObject.transform.position = respawnPoint.position;
+
+        int i = respawningPlayer ? 0 : 1;
+        respawnedObject.transform.position = respawnPoints[i].position;
+        respawningPlayer = true;
+
         yield return threeSeconds;
         EnablePlayer(respawnedObject);
     }

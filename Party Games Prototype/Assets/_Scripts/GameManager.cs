@@ -8,8 +8,9 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private PlayerInputManager playerInputManager;
-    private CountdownTimer oneSecondCountdownTimer = new(1);
-    private bool isStarting = true;
+    private bool firstTime = true;
+    private bool isStarted = false;
+    private WaitForSecondsRealtime oneSecondRealTime = new(1f);
 
     public event Action OnGameStart;
 
@@ -38,28 +39,22 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (isStarting && playerInputManager.playerCount == playerInputManager.maxPlayerCount)
+        if (firstTime && playerInputManager.playerCount == /*playerInputManager.maxPlayerCount*/ 1)
         {
-            if (!oneSecondCountdownTimer.GetTimerStatus())
-            {
-                oneSecondCountdownTimer.StartTimer();
-            }
-            else
-            {
-                if (!UIManager.Instance.CountdownIsStarted())
-                {
-                    UIManager.Instance.StartCountdown();
-                }
-                else
-                {
-                    OnGameStart?.Invoke();
-                    isStarting = false;
-                }
-            }
+            StartCoroutine(StartCountdown());
         }
+    }
+
+    private IEnumerator StartCountdown()
+    {
+        firstTime = false;
+        yield return oneSecondRealTime;
+        OnGameStart?.Invoke();
     }
 
     public void StopTimeScale() => Time.timeScale = 0;
 
     public void StartTimeScale() => Time.timeScale = 1;
+
+    public void CountdownFinished() => OnGameStart?.Invoke();
 }

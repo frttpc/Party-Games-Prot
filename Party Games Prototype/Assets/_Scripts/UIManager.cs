@@ -9,9 +9,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private PlayerInputManager playerInputManager;
 
     [SerializeField] private List<TextMeshProUGUI> joinTexts;
-    [SerializeField] private TextMeshProUGUI timerText;
-    [SerializeField] private CountdownTimer countdownTimer = new(3);
-    private bool startCountdown = false;
+    [SerializeField] private CountdownTimer countdownTimer;
+    private bool countdownFinished = false;
 
     public static UIManager Instance;
 
@@ -21,26 +20,15 @@ public class UIManager : MonoBehaviour
         DontDestroyOnLoad(this);
     }
 
-    private void Update()
-    {
-        if (startCountdown)
-        {
-            countdownTimer.StartTimer();
-            timerText.gameObject.SetActive(true);
-            startCountdown = false;
-        }
-
-        if (!countdownTimer.GetTimerStatus())
-            timerText.text = ((int)countdownTimer.GetTime()).ToString();
-    }
-
     private void OnEnable() => playerInputManager.onPlayerJoined += PlayerJoinText;
 
     private void OnDisable() => playerInputManager.onPlayerJoined -= PlayerJoinText;
 
     private void PlayerJoinText(PlayerInput player) => joinTexts[playerInputManager.playerCount - 1].gameObject.SetActive(false);
 
-    public bool CountdownIsStarted() => startCountdown;
+    public void StartCountdown() => countdownTimer.enabled = true;
 
-    public void StartCountdown() => startCountdown = true;
+    public void CountdownFinished() => countdownFinished = true;
+
+    public bool IsCountdownFinished() => countdownFinished;
 }
