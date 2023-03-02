@@ -1,15 +1,16 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    private Rigidbody2D playerRB;
+    public Player player = Player.None;
+    public Rigidbody2D playerRB { get; private set; }
+    public SpriteRenderer spriteRenderer { get; private set; }
+    public TrailRenderer trailRenderer { get; private set; }
+
     private BoxCollider2D boxCollider2D;
     private CircleCollider2D circleCollider2D;
     private Animator animator;
-    private SpriteRenderer spriteRenderer;
     private PlayerInputController playerInputController;
 
     [SerializeField] private SpriteRenderer colorRenderer;
@@ -36,7 +37,7 @@ public class PlayerController : MonoBehaviour
     private float dashTimeCounter;
     [SerializeField] private float dashCooldown;
     private float dashCooldownCounter;
-    private bool canDash = true;
+    private bool canDash = false;
     private bool isDashing = false;
 
     [Header("Wall Jump")]
@@ -59,6 +60,7 @@ public class PlayerController : MonoBehaviour
         playerRB = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        trailRenderer = GetComponent<TrailRenderer>();
         boxCollider2D = GetComponent<BoxCollider2D>();
         circleCollider2D = GetComponent<CircleCollider2D>();
         playerInputController = GetComponent<PlayerInputController>();
@@ -67,6 +69,7 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         gravityScale = playerRB.gravityScale;
+        dashCooldownCounter = 0;
     }
 
     private void Update()
@@ -74,9 +77,7 @@ public class PlayerController : MonoBehaviour
         isGrounded = GroundCheck();
 
         if (playerRB.velocity.y <= 0)
-        {
             isWalled = WallCheck();
-        }
         else
             isWalled = false;
 
@@ -99,8 +100,11 @@ public class PlayerController : MonoBehaviour
 
         if (playerInputController.dashIsPressed && canDash)
         {
+            isDashing = true;
+            playerRB.gravityScale = 0;
+
             dashTimeCounter = dashTime;
-            dashCooldownCounter = dashCooldown;
+            dashCooldownCounter = 0;
         }
 
         if (dashTimeCounter < 0)
@@ -109,14 +113,20 @@ public class PlayerController : MonoBehaviour
             playerRB.gravityScale = gravityScale;
             dashTimeCounter = dashTime;
         }
-
-        if(dashCooldownCounter < 0)
+        else
         {
-            canDash = true;
+            dashTimeCounter -= Time.deltaTime;
         }
 
-        dashTimeCounter -= Time.deltaTime;
-        dashCooldownCounter -= Time.deltaTime;
+        if (dashCooldownCounter >= dashCooldown)
+        {
+            canDash = true;
+            dashCooldownCounter = dashCooldown;
+        }
+        else
+        {
+            dashCooldownCounter += Time.deltaTime;
+        }
 
         #endregion
 
@@ -126,6 +136,7 @@ public class PlayerController : MonoBehaviour
 
         UpdateAnimator();
         UpdateSprite();
+        UpdateDashBar();
     }
 
     private void FixedUpdate()
@@ -188,18 +199,17 @@ public class PlayerController : MonoBehaviour
 
         #region Dash
 
-        if (playerInputController.dashIsPressed && canDash)
+        if (isDashing)
         {
             Dash();
         }
 
         #endregion
 
-        playerInputController.dashIsPressed = false;
         playerInputController.jumpIsPressed = false;
-        
-        velocityBeforePhysicsUpdate = playerRB.velocity;
+        playerInputController.dashIsPressed = false;
 
+        velocityBeforePhysicsUpdate = playerRB.velocity;
     }
 
     private void Jump()
@@ -216,17 +226,21 @@ public class PlayerController : MonoBehaviour
 
     private void Dash()
     {
-        isDashing = true;
         canDash = false;
 
         playerRB.gravityScale = 0;
-        Vector2 dir = (playerRB.velocity * 100).normalized;
+        playerRB.velocity = Vector2.zero;
+
+        Vector2 dir = spriteRenderer.flipX ? Vector2.left : Vector2.right;
+
         playerRB.AddForce(dir * dashForce, ForceMode2D.Impulse);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.transform.GetComponent<PlayerController>())
+        PlayerController enemyController = collision.transform.GetComponent<PlayerController>();
+
+        if (enemyController)
         { 
             Vector2 normal = collision.GetContact(0).normal;
 
@@ -236,7 +250,7 @@ public class PlayerController : MonoBehaviour
 
             float magnitude = Mathf.Clamp(velocityBeforePhysicsUpdate.magnitude, minPushAmount, maxPushAmount);
 
-            collision.transform.GetComponent<Rigidbody2D>().AddForce(angleMag * magnitude * pushMultiplier * -normal, ForceMode2D.Impulse);
+            enemyController.playerRB.AddForce(angleMag * magnitude * pushMultiplier * -normal, ForceMode2D.Impulse);
         }
     }
 
@@ -249,7 +263,7 @@ public class PlayerController : MonoBehaviour
 
     private bool WallCheck()
     {
-        Vector2 dir = new Vector2(moveVector.x, 0);
+        Vector2 dir = new (moveVector.x, 0);
 
         RaycastHit2D raycastHit = Physics2D.Raycast(circleCollider2D.bounds.center, dir, circleCollider2D.radius + 0.3f , groundLayer);
 
@@ -280,7 +294,10 @@ public class PlayerController : MonoBehaviour
             spriteRenderer.flipX = false;
     }
 
+    private void UpdateDashBar() => UIManager.Instance.UpdateDashBar(player, dashCooldownCounter / dashCooldown);
+
     public void SetColor(Color color) => colorRenderer.color = color;
 
     public SpriteRenderer GetColorRenderer() => colorRenderer;
+
 }

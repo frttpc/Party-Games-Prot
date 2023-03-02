@@ -65,11 +65,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 647f42b2948566f4a9bfd9a537869a82, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player: 0
   colorRenderer: {fileID: 8021748340541442214}
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  playerInputController: {fileID: 3053818320370885974}
   moveAcceleration: 10
   moveDecceleration: 15
   maxMoveSpeed: 20
@@ -77,7 +77,7 @@ MonoBehaviour:
   maxFallSpeed: 50
   coyoteTime: 0.2
   jumpBufferTime: 0.2
-  dashForce: 50
+  dashForce: 55
   dashTime: 0.2
   dashCooldown: 2
   wallFriction: 15

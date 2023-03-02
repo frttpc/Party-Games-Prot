@@ -35,62 +35,71 @@ public class PlayerManager : MonoBehaviour
     {
         player.transform.position = startingPoints[playerInputManager.playerCount - 1].position;
 
-        player.GetComponent<PlayerController>().SetColor(playerColors[playerInputManager.playerCount - 1]);
+        PlayerController playerController = player.GetComponent<PlayerController>();
+        playerController.SetColor(playerColors[playerInputManager.playerCount - 1]);
+        playerController.player = (Player)playerInputManager.playerCount;
 
         targetGroup.AddMember(player.transform, 1f, 1f);
 
         player.name = "Player " + playerInputManager.playerCount;
 
         if (playerInputManager.playerCount == playerInputManager.maxPlayerCount)
-            player.GetComponent<SpriteRenderer>().flipX = true;
+            playerController.spriteRenderer.flipX = true;
     }
 
-    public void PlayerDied(GameObject respawnedObject)
+    public void PlayerDied(PlayerController diedPlayer)
     {
-        StartCoroutine(RespawnPlayer(respawnedObject));
+        StartCoroutine(RespawnPlayer(diedPlayer));
     }
 
-    public IEnumerator RespawnPlayer(GameObject respawnedObject)
+    public IEnumerator RespawnPlayer(PlayerController respawnedPlayer)
     {
-        DisablePlayer(respawnedObject);
+        DisablePlayer(respawnedPlayer);
 
         int i = respawningPlayer ? 0 : 1;
-        respawnedObject.transform.position = respawnPoints[i].position;
+        respawnedPlayer.transform.position = respawnPoints[i].position;
         respawningPlayer = true;
 
         yield return threeSeconds;
-        EnablePlayer(respawnedObject);
+        EnablePlayer(respawnedPlayer);
+
+        respawningPlayer = false;
     }
 
-    private void DisablePlayer(GameObject respawnedObject)
+    private void DisablePlayer(PlayerController respawnedPlayer)
     {
-        respawnedObject.GetComponent<SpriteRenderer>().enabled = false;
-        respawnedObject.GetComponent<TrailRenderer>().enabled = false;
+        respawnedPlayer.spriteRenderer.enabled = false;
+        respawnedPlayer.trailRenderer.enabled = false;
 
-        Rigidbody2D RB = respawnedObject.GetComponent<Rigidbody2D>();
-        RB.constraints = RigidbodyConstraints2D.FreezePositionY | RigidbodyConstraints2D.FreezePositionX;
+        Rigidbody2D RB = respawnedPlayer.playerRB;
+        RB.constraints = RigidbodyConstraints2D.FreezePositionY | RigidbodyConstraints2D.FreezePositionX | RigidbodyConstraints2D.FreezeRotation;
 
-        PlayerController player = respawnedObject.GetComponent<PlayerController>();
-        player.GetColorRenderer().enabled = false;
-        player.enabled = false;
+        respawnedPlayer.GetColorRenderer().enabled = false;
+        respawnedPlayer.enabled = false;
     }
 
-    private void EnablePlayer(GameObject respawnedObject)
+    private void EnablePlayer(PlayerController respawnedPlayer)
     {
-        respawnedObject.GetComponent<SpriteRenderer>().enabled = true;
-        respawnedObject.GetComponent<TrailRenderer>().enabled = true;
+        respawnedPlayer.spriteRenderer.enabled = true;
+        respawnedPlayer.trailRenderer.enabled = true;
 
-        Rigidbody2D RB = respawnedObject.GetComponent<Rigidbody2D>();
+        Rigidbody2D RB = respawnedPlayer.playerRB;
         RB.constraints = RigidbodyConstraints2D.FreezeRotation;
         RB.velocity = Vector2.zero;
 
-        PlayerController player = respawnedObject.GetComponent<PlayerController>();
-        player.GetColorRenderer().enabled = true;
-        player.enabled = true;
+        respawnedPlayer.GetColorRenderer().enabled = true;
+        respawnedPlayer.enabled = true;
     }
 
     public int GetPlayerCount()
     {
         return playerInputManager.playerCount;
     }
+}
+
+public enum Player
+{
+    None,
+    P1,
+    P2
 }
