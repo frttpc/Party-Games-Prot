@@ -85,6 +85,7 @@ MonoBehaviour:
   maxPushAmount: 100
   minPushAmount: 10
   pushMultiplier: 3
+  power: 0
 --- !u!212 &4498557242382746668
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -432,7 +433,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
-  m_Color: {r: 1, g: 0.15723264, b: 0.15723264, a: 1}
+  m_Color: {r: 0.990566, g: 0.14640433, b: 0.14640433, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

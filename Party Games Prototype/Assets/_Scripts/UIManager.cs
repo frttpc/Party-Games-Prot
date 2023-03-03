@@ -4,9 +4,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
+using RengeGames.HealthBars;
 
 public class UIManager : MonoBehaviour
 {
+    [SerializeField] List<GameObject> HUDs;
+    public List<RadialSegmentedHealthBar> powerBars;
     public List<Image> dashBars;
 
     [SerializeField] private List<TextMeshProUGUI> joinTexts;
@@ -25,24 +28,38 @@ public class UIManager : MonoBehaviour
 
     private void OnEnable()
     {
-        playerInputManager.onPlayerJoined += PlayerJoinText;
-        playerInputManager.onPlayerJoined += PlayerDashBar;
+        playerInputManager.onPlayerJoined += PlayerHUD;
     }
 
     private void OnDisable() 
     {
-        playerInputManager.onPlayerJoined -= PlayerJoinText;
-        playerInputManager.onPlayerJoined -= PlayerDashBar;
+        playerInputManager.onPlayerJoined -= PlayerHUD;
     }
 
-    private void PlayerJoinText(PlayerInput player) => joinTexts[playerInputManager.playerCount - 1].gameObject.SetActive(false);
+    private void Start()
+    {
+        foreach (RadialSegmentedHealthBar bar in powerBars)
+        {
+            bar.InnerColor.Value = PlayerManager.Instance.playerColors[powerBars.IndexOf(bar)];
+        }
+    }
 
-    private void PlayerDashBar(PlayerInput player) => dashBars[playerInputManager.playerCount - 1].transform.parent.gameObject.SetActive(true);
+    private void PlayerHUD(PlayerInput player)
+    {
+        joinTexts[playerInputManager.playerCount - 1].gameObject.SetActive(false);
+        HUDs[playerInputManager.playerCount - 1].SetActive(true);
+    }
 
     public void UpdateDashBar(Player player, float amount)
     {
         Image dashBar = dashBars[((int)player) - 1];
         dashBar.fillAmount = amount;
+    }
+
+    public void UpdatePowerBar(Player player, float amount)
+    {
+        RadialSegmentedHealthBar powerBar = powerBars[((int)player) - 1];
+        powerBar.AddRemovePercent(amount);
     }
 
     public void StartCountdown() => countdownTimer.enabled = true;

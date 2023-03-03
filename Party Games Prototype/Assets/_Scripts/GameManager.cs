@@ -39,7 +39,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (firstTime && playerInputManager.playerCount == /*playerInputManager.maxPlayerCount*/ 1)
+        if (firstTime && playerInputManager.playerCount == playerInputManager.maxPlayerCount)
         {
             StartCoroutine(StartCountdown());
         }

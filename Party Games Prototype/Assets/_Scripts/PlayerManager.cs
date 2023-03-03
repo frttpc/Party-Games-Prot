@@ -10,7 +10,9 @@ public class PlayerManager : MonoBehaviour
     [SerializeField] private CinemachineTargetGroup targetGroup;
     [SerializeField] private List<Transform> respawnPoints = new();
     [SerializeField] private List<Transform> startingPoints = new();
-    [SerializeField] private List<Color> playerColors = new();
+
+    [ColorUsage(true, true)]
+    public List<Color> playerColors = new();
     private bool respawningPlayer = false;
 
     private PlayerInputManager playerInputManager;
@@ -44,7 +46,7 @@ public class PlayerManager : MonoBehaviour
         player.name = "Player " + playerInputManager.playerCount;
 
         if (playerInputManager.playerCount == playerInputManager.maxPlayerCount)
-            playerController.spriteRenderer.flipX = true;
+            playerController.GetComponent<SpriteRenderer>().flipX = true;
     }
 
     public void PlayerDied(PlayerController diedPlayer)

@@ -5,7 +5,7 @@ public class PlayerController : MonoBehaviour
 {
     public Player player = Player.None;
     public Rigidbody2D playerRB { get; private set; }
-    public SpriteRenderer spriteRenderer { get; private set; }
+    public SpriteRenderer spriteRenderer;
     public TrailRenderer trailRenderer { get; private set; }
 
     private BoxCollider2D boxCollider2D;
@@ -49,6 +49,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float maxPushAmount;
     [SerializeField] private float minPushAmount;
     [SerializeField] [Range(1,5)] private float pushMultiplier;
+
+    [SerializeField] [Range(0, 1)] private float power;
 
     private Vector2 velocityBeforePhysicsUpdate;
     private float gravityScale;
@@ -137,6 +139,7 @@ public class PlayerController : MonoBehaviour
         UpdateAnimator();
         UpdateSprite();
         UpdateDashBar();
+        UpdatePowerBar();
     }
 
     private void FixedUpdate()
@@ -295,9 +298,9 @@ public class PlayerController : MonoBehaviour
     }
 
     private void UpdateDashBar() => UIManager.Instance.UpdateDashBar(player, dashCooldownCounter / dashCooldown);
+    private void UpdatePowerBar() => UIManager.Instance.UpdatePowerBar(player, power);
 
     public void SetColor(Color color) => colorRenderer.color = color;
 
     public SpriteRenderer GetColorRenderer() => colorRenderer;
-
 }
