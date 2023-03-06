@@ -10,6 +10,7 @@ public class PlayerInputController : MonoBehaviour
 
     public bool dashIsPressed { get; set; } = false;
     public bool jumpIsPressed { get; set; } = false;
+    public bool attackIsPressed { get; set; } = false;
 
     private void Awake()
     {
@@ -24,6 +25,7 @@ public class PlayerInputController : MonoBehaviour
         duck = playerActionMap.FindAction("Duck");
         playerActionMap.FindAction("Jump").performed += JumpIsPressed;
         playerActionMap.FindAction("Dash/Push").performed += DashIsPressed;
+        playerActionMap.FindAction("Attack").performed += AttackIsPressed;
     }
 
     private void OnDisable()
@@ -31,9 +33,12 @@ public class PlayerInputController : MonoBehaviour
         playerActionMap.Disable();
         playerActionMap.FindAction("Jump").performed -= JumpIsPressed;
         playerActionMap.FindAction("Dash/Push").performed -= DashIsPressed;
+        playerActionMap.FindAction("Attack").performed -= AttackIsPressed;
     }
 
     private void JumpIsPressed(InputAction.CallbackContext context) => jumpIsPressed = context.performed;
 
     private void DashIsPressed(InputAction.CallbackContext context) => dashIsPressed = context.performed;
+
+    private void AttackIsPressed(InputAction.CallbackContext context) => attackIsPressed = context.performed;
 }

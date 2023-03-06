@@ -7,11 +7,13 @@ public class PlayerController : MonoBehaviour
     public Rigidbody2D playerRB { get; private set; }
     public SpriteRenderer spriteRenderer;
     public TrailRenderer trailRenderer { get; private set; }
+    public LayerMask enemyLayer;
 
     private BoxCollider2D boxCollider2D;
     private CircleCollider2D circleCollider2D;
     private Animator animator;
     private PlayerInputController playerInputController;
+    private Attack attack;
 
     [SerializeField] private SpriteRenderer colorRenderer;
     [SerializeField] private LayerMask groundLayer;
@@ -50,12 +52,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float minPushAmount;
     [SerializeField] [Range(1,5)] private float pushMultiplier;
 
-    [SerializeField] [Range(0, 1)] private float power;
-
     private Vector2 velocityBeforePhysicsUpdate;
     private float gravityScale;
     private bool isDucking = false;
     private bool isGrounded = false;
+    public bool isFacingRight = true;
 
     private void Awake()
     {
@@ -66,6 +67,7 @@ public class PlayerController : MonoBehaviour
         boxCollider2D = GetComponent<BoxCollider2D>();
         circleCollider2D = GetComponent<CircleCollider2D>();
         playerInputController = GetComponent<PlayerInputController>();
+        attack = GetComponent<Attack>();
     }
 
     private void Start()
@@ -100,7 +102,7 @@ public class PlayerController : MonoBehaviour
 
         #region Dash
 
-        if (playerInputController.dashIsPressed && canDash)
+        if (playerInputController.dashIsPressed && canDash && !isDashing)
         {
             isDashing = true;
             playerRB.gravityScale = 0;
@@ -137,9 +139,8 @@ public class PlayerController : MonoBehaviour
         isDucking = playerInputController.duck.ReadValue<float>() > 0.5f && isGrounded;
 
         UpdateAnimator();
-        UpdateSprite();
+        Flip();
         UpdateDashBar();
-        UpdatePowerBar();
     }
 
     private void FixedUpdate()
@@ -232,11 +233,9 @@ public class PlayerController : MonoBehaviour
         canDash = false;
 
         playerRB.gravityScale = 0;
-        playerRB.velocity = Vector2.zero;
-
         Vector2 dir = spriteRenderer.flipX ? Vector2.left : Vector2.right;
 
-        playerRB.AddForce(dir * dashForce, ForceMode2D.Impulse);
+        playerRB.AddForce(dir * dashForce - playerRB.velocity, ForceMode2D.Impulse);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -247,14 +246,17 @@ public class PlayerController : MonoBehaviour
         { 
             Vector2 normal = collision.GetContact(0).normal;
 
-            float angle = Mathf.Clamp(Vector2.Angle(-normal, velocityBeforePhysicsUpdate), 1, 90);
-
-            float angleMag = Mathf.Lerp(1, 0, angle / 90);
-
-            float magnitude = Mathf.Clamp(velocityBeforePhysicsUpdate.magnitude, minPushAmount, maxPushAmount);
-
-            enemyController.playerRB.AddForce(angleMag * magnitude * pushMultiplier * -normal, ForceMode2D.Impulse);
+            Push(enemyController, normal);
         }
+    }
+
+    private void Push(PlayerController enemyController, Vector2 normal)
+    {
+        float angle = Mathf.Clamp(Vector2.Angle(-normal, velocityBeforePhysicsUpdate), 1, 90);
+        float angleMag = Mathf.Lerp(1, 0, angle / 90);
+        float magnitude = Mathf.Clamp(velocityBeforePhysicsUpdate.magnitude, minPushAmount, maxPushAmount);
+
+        enemyController.playerRB.AddForce(angleMag * magnitude * pushMultiplier * -normal, ForceMode2D.Impulse);
     }
 
     private bool GroundCheck()
@@ -266,9 +268,7 @@ public class PlayerController : MonoBehaviour
 
     private bool WallCheck()
     {
-        Vector2 dir = new (moveVector.x, 0);
-
-        RaycastHit2D raycastHit = Physics2D.Raycast(circleCollider2D.bounds.center, dir, circleCollider2D.radius + 0.3f , groundLayer);
+        RaycastHit2D raycastHit = Physics2D.Raycast(circleCollider2D.bounds.center, new(moveVector.x, 0), circleCollider2D.radius + 0.3f , groundLayer);
 
         return raycastHit.collider != null;
     }
@@ -278,27 +278,26 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat("xSpeed", Mathf.Abs(playerRB.velocity.x));
         animator.SetFloat("ySpeed", playerRB.velocity.y);
 
-        if (isGrounded)
-            animator.SetBool("isGrounded", true);
-        else
-            animator.SetBool("isGrounded", false);
-
-        if (isDucking)
-            animator.SetBool("isDucking", true);
-        else
-            animator.SetBool("isDucking", false);
+        animator.SetBool("isGrounded", isGrounded);
+        animator.SetBool("isDucking", isDucking);
     }
 
-    private void UpdateSprite()
+    private void Flip()
     {
         if (moveVector.x < 0)
+        {
             spriteRenderer.flipX = true;
+            attack.attackPoint.localRotation = Quaternion.Euler(new Vector2(0, 180f));
+            attack.attackPoint.transform.Rotate(Vector2.up, 180, Space.Self);
+        }
         else if (moveVector.x > 0)
+        {
             spriteRenderer.flipX = false;
+            attack.attackPoint.localRotation = Quaternion.identity;
+        }
     }
 
     private void UpdateDashBar() => UIManager.Instance.UpdateDashBar(player, dashCooldownCounter / dashCooldown);
-    private void UpdatePowerBar() => UIManager.Instance.UpdatePowerBar(player, power);
 
     public void SetColor(Color color) => colorRenderer.color = color;
 

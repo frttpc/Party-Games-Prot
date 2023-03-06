@@ -13,6 +13,7 @@ public class PlayerManager : MonoBehaviour
 
     [ColorUsage(true, true)]
     public List<Color> playerColors = new();
+    public List<LayerMask> playerLayers = new();
     private bool respawningPlayer = false;
 
     private PlayerInputManager playerInputManager;
@@ -40,6 +41,7 @@ public class PlayerManager : MonoBehaviour
         PlayerController playerController = player.GetComponent<PlayerController>();
         playerController.SetColor(playerColors[playerInputManager.playerCount - 1]);
         playerController.player = (Player)playerInputManager.playerCount;
+        playerController.enemyLayer = playerLayers[playerInputManager.playerCount - 1];
 
         targetGroup.AddMember(player.transform, 1f, 1f);
 

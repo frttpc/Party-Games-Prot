@@ -62,6 +62,15 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Attack"",
+                    ""type"": ""Button"",
+                    ""id"": ""5caa8113-f2ac-4962-8138-e2425b4f03bd"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -211,7 +220,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""90454439-3a73-47fa-878b-77c218e8a388"",
-                    ""path"": ""<Keyboard>/space"",
+                    ""path"": ""<Keyboard>/rightShift"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Keyboard"",
@@ -284,6 +293,28 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Duck"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6265ac4d-94df-463b-8592-de6e63961503"",
+                    ""path"": ""<Keyboard>/enter"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard"",
+                    ""action"": ""Attack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c188c14d-b9d9-4c74-8c31-f1ba2ca631ed"",
+                    ""path"": ""<Gamepad>/buttonEast"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Attack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -330,6 +361,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         m_Player_Duck = m_Player.FindAction("Duck", throwIfNotFound: true);
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_DashPush = m_Player.FindAction("Dash/Push", throwIfNotFound: true);
+        m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -395,6 +427,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Duck;
     private readonly InputAction m_Player_Jump;
     private readonly InputAction m_Player_DashPush;
+    private readonly InputAction m_Player_Attack;
     public struct PlayerActions
     {
         private @PlayerInputActions m_Wrapper;
@@ -403,6 +436,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         public InputAction @Duck => m_Wrapper.m_Player_Duck;
         public InputAction @Jump => m_Wrapper.m_Player_Jump;
         public InputAction @DashPush => m_Wrapper.m_Player_DashPush;
+        public InputAction @Attack => m_Wrapper.m_Player_Attack;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -424,6 +458,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @DashPush.started += instance.OnDashPush;
             @DashPush.performed += instance.OnDashPush;
             @DashPush.canceled += instance.OnDashPush;
+            @Attack.started += instance.OnAttack;
+            @Attack.performed += instance.OnAttack;
+            @Attack.canceled += instance.OnAttack;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -440,6 +477,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @DashPush.started -= instance.OnDashPush;
             @DashPush.performed -= instance.OnDashPush;
             @DashPush.canceled -= instance.OnDashPush;
+            @Attack.started -= instance.OnAttack;
+            @Attack.performed -= instance.OnAttack;
+            @Attack.canceled -= instance.OnAttack;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -490,5 +530,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         void OnDuck(InputAction.CallbackContext context);
         void OnJump(InputAction.CallbackContext context);
         void OnDashPush(InputAction.CallbackContext context);
+        void OnAttack(InputAction.CallbackContext context);
     }
 }
