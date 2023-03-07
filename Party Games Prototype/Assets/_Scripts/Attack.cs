@@ -7,43 +7,64 @@ public class Attack : MonoBehaviour
 {
     private PlayerController playerController;
     private PlayerInputController playerInputController;
-    private Animator animator;
 
-    [SerializeField] private float maxPower = 100f;
+    [Header("Power")]
+    [SerializeField] private float maxPower = 10f;
     private float currentPower = 0;
 
+    [Header("Attack")]
     public Transform attackPoint;
     [SerializeField] private float attackPower;
     [SerializeField] private float attackRange = 3f;
-    [SerializeField] private float attackCost = 50f;
+    [SerializeField] private float attackCost = 5f;
+    [SerializeField] [Range(0, 0.5f)] private float attackTime = 0.1f;
+    private float attackTimeCounter;
+
+    private bool isAttacking = false;
+    private float elapsedTime;
 
     private void Awake()
     {
         playerInputController = GetComponent<PlayerInputController>();
         playerController = GetComponent<PlayerController>();
-        animator = GetComponent<Animator>();
     }
 
     void Update()
     {
-        Debug.Log(currentPower);
-
         if (currentPower < maxPower)
         {
             IncreasePower(Time.deltaTime);
-            Debug.Log(currentPower);
         }
 
         if (playerInputController.attackIsPressed && currentPower >= attackCost)
         {
-            Debug.Log(playerInputController.attackIsPressed);
+            isAttacking = true;
+
+            attackTimeCounter = attackTime;
+
             playerController.playerRB.velocity = Vector2.zero;
+            playerController.playerRB.gravityScale = 0;
+            //playerController.enabled = false;
+
             MeleeAttack();
             DecreasePower(attackCost);
+
+            playerController.animator.SetTrigger("isAttacking");
+        }
+
+        if (attackTimeCounter > 0)
+        {
+            attackTimeCounter -= Time.deltaTime;
+        }
+        else
+        {
+            isAttacking = false;
+            //playerController.enabled = true;
+            elapsedTime += Time.deltaTime;
+            //playerController.playerRB.gravityScale = Mathf.Lerp(playerController.playerRB.gravityScale, playerController.gravityScale, elapsedTime / 2);
         }
 
         UpdatePowerBar();
-        UpdateAnimator();
 
         playerInputController.attackIsPressed = false;
     }
@@ -69,13 +90,8 @@ public class Attack : MonoBehaviour
 
     public void DecreasePower(float amount)
     {
-        currentPower = (currentPower - amount < 0) ? 0 : currentPower - amount;
+        currentPower = (currentPower - amount <= 0) ? 0 : currentPower - amount;
     }
 
-    private void UpdateAnimator()
-    {
-        animator.SetBool("isAttacking", playerInputController.attackIsPressed);
-    }
-
-    private void UpdatePowerBar() => UIManager.Instance.UpdatePowerBar(playerController.player, currentPower);
+    private void UpdatePowerBar() => UIManager.Instance.UpdatePowerBar(playerController.player, currentPower / maxPower);
 }

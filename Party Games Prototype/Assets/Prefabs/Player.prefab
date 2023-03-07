@@ -50,7 +50,6 @@ GameObject:
   - component: {fileID: 4498557242382746672}
   - component: {fileID: 4498557242382746671}
   - component: {fileID: 8155777227439269234}
-  - component: {fileID: 1977994293}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -123,6 +122,7 @@ MonoBehaviour:
   maxPushAmount: 100
   minPushAmount: 10
   pushMultiplier: 3
+  isFacingRight: 1
 --- !u!114 &9172483858044040778
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -135,11 +135,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7598169baf7d04d4087d7fbd63fb0e22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxPower: 100
+  maxPower: 10
   attackPoint: {fileID: 2925694573242237547}
   attackPower: 75
   attackRange: 3
-  attackCost: 50
+  attackCost: 5
+  attackTime: 0.1
 --- !u!212 &4498557242382746668
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -413,23 +414,6 @@ TrailRenderer:
   m_MinVertexDistance: 0.1
   m_Autodestruct: 0
   m_Emitting: 1
---- !u!114 &1977994293
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4498557242382746666}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7598169baf7d04d4087d7fbd63fb0e22, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxPower: 100
-  attackPoint: {fileID: 0}
-  attackPower: 0
-  attackRange: 0
-  attackCost: 50
 --- !u!1 &5638201651469182854
 GameObject:
   m_ObjectHideFlags: 0

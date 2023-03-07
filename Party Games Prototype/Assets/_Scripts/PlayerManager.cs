@@ -48,7 +48,7 @@ public class PlayerManager : MonoBehaviour
         player.name = "Player " + playerInputManager.playerCount;
 
         if (playerInputManager.playerCount == playerInputManager.maxPlayerCount)
-            playerController.GetComponent<SpriteRenderer>().flipX = true;
+            playerController.Flip();
     }
 
     public void PlayerDied(PlayerController diedPlayer)

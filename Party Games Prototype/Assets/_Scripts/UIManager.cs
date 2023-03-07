@@ -59,7 +59,7 @@ public class UIManager : MonoBehaviour
     public void UpdatePowerBar(Player player, float amount)
     {
         RadialSegmentedHealthBar powerBar = powerBars[((int)player) - 1];
-        powerBar.AddRemovePercent(amount);
+        powerBar.SetPercent(amount);
     }
 
     public void StartCountdown() => countdownTimer.enabled = true;

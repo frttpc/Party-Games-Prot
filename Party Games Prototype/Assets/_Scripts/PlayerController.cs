@@ -8,10 +8,10 @@ public class PlayerController : MonoBehaviour
     public SpriteRenderer spriteRenderer;
     public TrailRenderer trailRenderer { get; private set; }
     public LayerMask enemyLayer;
+    public Animator animator { get; private set; }
 
     private BoxCollider2D boxCollider2D;
     private CircleCollider2D circleCollider2D;
-    private Animator animator;
     private PlayerInputController playerInputController;
     private Attack attack;
 
@@ -53,7 +53,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] [Range(1,5)] private float pushMultiplier;
 
     private Vector2 velocityBeforePhysicsUpdate;
-    private float gravityScale;
+    public float gravityScale { get; private set; }
     private bool isDucking = false;
     private bool isGrounded = false;
     public bool isFacingRight = true;
@@ -78,6 +78,8 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        Debug.Log("Update Start: " + playerRB.gravityScale);
+
         isGrounded = GroundCheck();
 
         if (playerRB.velocity.y <= 0)
@@ -106,12 +108,12 @@ public class PlayerController : MonoBehaviour
         {
             isDashing = true;
             playerRB.gravityScale = 0;
-
+            Debug.LogWarning("Dashed: " + playerRB.gravityScale);
             dashTimeCounter = dashTime;
             dashCooldownCounter = 0;
         }
 
-        if (dashTimeCounter < 0)
+        if (dashTimeCounter < 0 && isDashing)
         {
             isDashing = false;
             playerRB.gravityScale = gravityScale;
@@ -141,10 +143,14 @@ public class PlayerController : MonoBehaviour
         UpdateAnimator();
         Flip();
         UpdateDashBar();
+
+        Debug.Log("Update End: " + playerRB.gravityScale);
     }
 
     private void FixedUpdate()
     {
+        Debug.Log("Fixed Start: " + playerRB.gravityScale);
+
         #region Move
 
         if (!isDashing)
@@ -214,6 +220,8 @@ public class PlayerController : MonoBehaviour
         playerInputController.dashIsPressed = false;
 
         velocityBeforePhysicsUpdate = playerRB.velocity;
+
+        Debug.Log("Fixed End: " + playerRB.gravityScale);
     }
 
     private void Jump()
@@ -232,8 +240,7 @@ public class PlayerController : MonoBehaviour
     {
         canDash = false;
 
-        playerRB.gravityScale = 0;
-        Vector2 dir = spriteRenderer.flipX ? Vector2.left : Vector2.right;
+        Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
 
         playerRB.AddForce(dir * dashForce - playerRB.velocity, ForceMode2D.Impulse);
     }
@@ -282,18 +289,17 @@ public class PlayerController : MonoBehaviour
         animator.SetBool("isDucking", isDucking);
     }
 
-    private void Flip()
+    public void Flip()
     {
         if (moveVector.x < 0)
         {
-            spriteRenderer.flipX = true;
-            attack.attackPoint.localRotation = Quaternion.Euler(new Vector2(0, 180f));
-            attack.attackPoint.transform.Rotate(Vector2.up, 180, Space.Self);
+            transform.rotation = Quaternion.Euler(0, 180, 0);
+            isFacingRight = false;
         }
         else if (moveVector.x > 0)
         {
-            spriteRenderer.flipX = false;
-            attack.attackPoint.localRotation = Quaternion.identity;
+            transform.rotation = Quaternion.identity;
+            isFacingRight = true;
         }
     }
 
@@ -302,4 +308,5 @@ public class PlayerController : MonoBehaviour
     public void SetColor(Color color) => colorRenderer.color = color;
 
     public SpriteRenderer GetColorRenderer() => colorRenderer;
+
 }
