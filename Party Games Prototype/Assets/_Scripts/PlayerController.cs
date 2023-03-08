@@ -58,6 +58,8 @@ public class PlayerController : MonoBehaviour
     private bool isGrounded = false;
     public bool isFacingRight = true;
 
+    private bool dashed = false;
+
     private void Awake()
     {
         playerRB = GetComponent<Rigidbody2D>();
@@ -78,8 +80,6 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        Debug.Log("Update Start: " + playerRB.gravityScale);
-
         isGrounded = GroundCheck();
 
         if (playerRB.velocity.y <= 0)
@@ -104,11 +104,10 @@ public class PlayerController : MonoBehaviour
 
         #region Dash
 
-        if (playerInputController.dashIsPressed && canDash && !isDashing)
+        if (playerInputController.dashIsPressed && canDash && !isDucking)
         {
             isDashing = true;
-            playerRB.gravityScale = 0;
-            Debug.LogWarning("Dashed: " + playerRB.gravityScale);
+
             dashTimeCounter = dashTime;
             dashCooldownCounter = 0;
         }
@@ -144,13 +143,10 @@ public class PlayerController : MonoBehaviour
         Flip();
         UpdateDashBar();
 
-        Debug.Log("Update End: " + playerRB.gravityScale);
     }
 
     private void FixedUpdate()
     {
-        Debug.Log("Fixed Start: " + playerRB.gravityScale);
-
         #region Move
 
         if (!isDashing)
@@ -209,9 +205,25 @@ public class PlayerController : MonoBehaviour
 
         #region Dash
 
-        if (isDashing)
+        if (isDashing && !isDucking)
         {
             Dash();
+            dashed = true;
+        }
+
+        #endregion
+
+        #region Duck
+
+        if (isDucking)
+        {
+            playerRB.simulated = false;
+            playerRB.gravityScale = 0;
+        }
+        else
+        {
+            playerRB.simulated = true;
+            playerRB.gravityScale = gravityScale;
         }
 
         #endregion
@@ -221,7 +233,6 @@ public class PlayerController : MonoBehaviour
 
         velocityBeforePhysicsUpdate = playerRB.velocity;
 
-        Debug.Log("Fixed End: " + playerRB.gravityScale);
     }
 
     private void Jump()
@@ -239,6 +250,8 @@ public class PlayerController : MonoBehaviour
     private void Dash()
     {
         canDash = false;
+
+        playerRB.gravityScale = 0;
 
         Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
 
@@ -291,15 +304,18 @@ public class PlayerController : MonoBehaviour
 
     public void Flip()
     {
-        if (moveVector.x < 0)
+        if (!isDashing)
         {
-            transform.rotation = Quaternion.Euler(0, 180, 0);
-            isFacingRight = false;
-        }
-        else if (moveVector.x > 0)
-        {
-            transform.rotation = Quaternion.identity;
-            isFacingRight = true;
+            if (moveVector.x < 0)
+            {
+                transform.rotation = Quaternion.Euler(0, 180, 0);
+                isFacingRight = false;
+            }
+            else if (moveVector.x > 0)
+            {
+                transform.rotation = Quaternion.identity;
+                isFacingRight = true;
+            }
         }
     }
 

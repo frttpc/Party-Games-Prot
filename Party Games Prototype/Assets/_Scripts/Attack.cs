@@ -44,7 +44,7 @@ public class Attack : MonoBehaviour
 
             playerController.playerRB.velocity = Vector2.zero;
             playerController.playerRB.gravityScale = 0;
-            //playerController.enabled = false;
+            playerController.enabled = false;
 
             MeleeAttack();
             DecreasePower(attackCost);
@@ -59,9 +59,9 @@ public class Attack : MonoBehaviour
         else
         {
             isAttacking = false;
-            //playerController.enabled = true;
+            playerController.enabled = true;
             elapsedTime += Time.deltaTime;
-            //playerController.playerRB.gravityScale = Mathf.Lerp(playerController.playerRB.gravityScale, playerController.gravityScale, elapsedTime / 2);
+            playerController.playerRB.gravityScale = Mathf.Lerp(0, playerController.gravityScale, elapsedTime / 2);
         }
 
         UpdatePowerBar();
