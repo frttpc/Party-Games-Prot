@@ -42,6 +42,7 @@ public class UIManager : MonoBehaviour
         {
             bar.InnerColor.Value = PlayerManager.Instance.playerColors[powerBars.IndexOf(bar)];
         }
+
     }
 
     private void PlayerHUD(PlayerInput player)

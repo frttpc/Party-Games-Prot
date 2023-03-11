@@ -49,6 +49,8 @@ public class Attack : MonoBehaviour
             MeleeAttack();
             DecreasePower(attackCost);
 
+            AudioManager.Instance.PlaySound(PlayerState.Attack, playerController.audioSource);
+
             playerController.animator.SetTrigger("isAttacking");
         }
 

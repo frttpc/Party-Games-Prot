@@ -18,11 +18,12 @@ public class CountdownTimer : MonoBehaviour
         if (countdownTime > 1)
         {
             timerText.text = ((int)countdownTime).ToString();
-            countdownTime -= Time.deltaTime;
+            countdownTime -= Time.unscaledDeltaTime;
         }
         else
         {
             UIManager.Instance.CountdownFinished();
+            gameObject.SetActive(false);
         }
     }
 

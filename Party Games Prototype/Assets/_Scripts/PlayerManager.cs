@@ -20,6 +20,7 @@ public class PlayerManager : MonoBehaviour
     private readonly WaitForSeconds threeSeconds = new(3f);
 
     public event Action OnPlayerDeath;
+    public event Action OnPlayerRespawn;
 
     public static PlayerManager Instance;
 
@@ -66,6 +67,8 @@ public class PlayerManager : MonoBehaviour
 
         yield return threeSeconds;
         EnablePlayer(respawnedPlayer);
+
+        AudioManager.Instance.PlayRespawnSound(respawnedPlayer.audioSource);
 
         respawningPlayer = false;
     }

@@ -4,16 +4,17 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public Player player = Player.None;
-    public Rigidbody2D playerRB { get; private set; }
+    public PlayerState state = PlayerState.Idle;
     public SpriteRenderer spriteRenderer;
-    public TrailRenderer trailRenderer { get; private set; }
     public LayerMask enemyLayer;
     public Animator animator { get; private set; }
+    public Rigidbody2D playerRB { get; private set; }
+    public TrailRenderer trailRenderer { get; private set; }
+    public AudioSource audioSource { get; private set; }
 
-    private BoxCollider2D boxCollider2D;
+private BoxCollider2D boxCollider2D;
     private CircleCollider2D circleCollider2D;
     private PlayerInputController playerInputController;
-    private Attack attack;
 
     [SerializeField] private SpriteRenderer colorRenderer;
     [SerializeField] private LayerMask groundLayer;
@@ -57,7 +58,6 @@ public class PlayerController : MonoBehaviour
     private bool isDucking = false;
     private bool isGrounded = false;
     public bool isFacingRight = true;
-
     private bool dashed = false;
 
     private void Awake()
@@ -69,7 +69,7 @@ public class PlayerController : MonoBehaviour
         boxCollider2D = GetComponent<BoxCollider2D>();
         circleCollider2D = GetComponent<CircleCollider2D>();
         playerInputController = GetComponent<PlayerInputController>();
-        attack = GetComponent<Attack>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void Start()
@@ -107,6 +107,7 @@ public class PlayerController : MonoBehaviour
         if (playerInputController.dashIsPressed && canDash && !isDucking)
         {
             isDashing = true;
+            playerRB.gravityScale = 0;
 
             dashTimeCounter = dashTime;
             dashCooldownCounter = 0;
@@ -126,6 +127,7 @@ public class PlayerController : MonoBehaviour
         if (dashCooldownCounter >= dashCooldown)
         {
             canDash = true;
+            dashed = false;
             dashCooldownCounter = dashCooldown;
         }
         else
@@ -151,8 +153,13 @@ public class PlayerController : MonoBehaviour
 
         if (!isDashing)
         {
-            if (isDucking && isGrounded)
-                moveVector.x = 0;
+            if (isGrounded)
+            {
+                if (isDucking)
+                    moveVector.x = 0;
+                else if(Mathf.Abs(moveVector.x) > 0.1f)
+                    AudioManager.Instance.PlaySound(PlayerState.Walk, audioSource);
+            }
 
             float desiredSpeed = moveVector.x * maxMoveSpeed;
 
@@ -161,13 +168,14 @@ public class PlayerController : MonoBehaviour
             float accRate = (Mathf.Abs(moveVector.x) > 0.01f) ? moveAcceleration : moveDecceleration;
 
             playerRB.AddForce(accRate * speedDif * Vector2.right, ForceMode2D.Force);
+
         }
 
         #endregion
         
         #region Jump
         
-        if (playerInputController.jumpIsPressed && !isDashing)
+        if (playerInputController.jumpIsPressed && !isDashing && !isDucking)
         {
             if (jumpBufferCounter > 0 && coyoteTimeCounter > 0)
             {
@@ -182,6 +190,8 @@ public class PlayerController : MonoBehaviour
                 Jump();
                 doubleJumped = true;
             }
+
+            AudioManager.Instance.PlaySound(PlayerState.Jump, audioSource);
         }
 
         #endregion
@@ -205,9 +215,13 @@ public class PlayerController : MonoBehaviour
 
         #region Dash
 
-        if (isDashing && !isDucking)
+        if (isDashing && !isDucking && !dashed)
         {
+            canDash = false;
+
             Dash();
+            AudioManager.Instance.PlaySound(PlayerState.Dash, audioSource);
+
             dashed = true;
         }
 
@@ -249,10 +263,6 @@ public class PlayerController : MonoBehaviour
 
     private void Dash()
     {
-        canDash = false;
-
-        playerRB.gravityScale = 0;
-
         Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
 
         playerRB.AddForce(dir * dashForce - playerRB.velocity, ForceMode2D.Impulse);
@@ -267,6 +277,8 @@ public class PlayerController : MonoBehaviour
             Vector2 normal = collision.GetContact(0).normal;
 
             Push(enemyController, normal);
+
+            AudioManager.Instance.PlaySound(PlayerState.Push, audioSource);
         }
     }
 
@@ -325,4 +337,14 @@ public class PlayerController : MonoBehaviour
 
     public SpriteRenderer GetColorRenderer() => colorRenderer;
 
+}
+
+public enum PlayerState
+{
+    Idle,
+    Push,
+    Walk,
+    Jump,
+    Dash,
+    Attack
 }

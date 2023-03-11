@@ -3,14 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private PlayerInputManager playerInputManager;
     private bool firstTime = true;
-    private bool isStarted = false;
-    private WaitForSecondsRealtime oneSecondRealTime = new(1f);
+    public bool isStarted { get; private set; } = false;
+    private WaitForSecondsRealtime oneSecondRealTime = new(2.6f);
 
     public event Action OnGameStart;
 
@@ -41,6 +40,8 @@ public class GameManager : MonoBehaviour
     {
         if (firstTime && playerInputManager.playerCount == playerInputManager.maxPlayerCount)
         {
+            isStarted = true;
+            UIManager.Instance.StartCountdown();
             StartCoroutine(StartCountdown());
         }
     }
@@ -56,5 +57,4 @@ public class GameManager : MonoBehaviour
 
     public void StartTimeScale() => Time.timeScale = 1;
 
-    public void CountdownFinished() => OnGameStart?.Invoke();
 }
