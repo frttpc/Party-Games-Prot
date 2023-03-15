@@ -49,7 +49,10 @@ public class PlayerManager : MonoBehaviour
         player.name = "Player " + playerInputManager.playerCount;
 
         if (playerInputManager.playerCount == playerInputManager.maxPlayerCount)
+        {
             playerController.Flip();
+            playerController.gameObject.layer = 8;
+        }
     }
 
     public void PlayerDied(PlayerController diedPlayer)
