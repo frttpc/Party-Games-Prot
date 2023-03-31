@@ -2,6 +2,6 @@ SkipWizard=False
 optimizedResolution=1920:1080
 isFallbackLandscape=True
 supportBothOrientations=False
-responsiveDesign=3
+responsiveDesign=1
 TextMeshPro=<null>
 asmdef=<null>
